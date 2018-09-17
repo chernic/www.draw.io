@@ -1,0 +1,96 @@
+><mod_tas_freeswitch.so                                                                 
+        Flag                                = "Enable"                                  启用或禁用
+        Type                                = "FreeSwitch"                              模块类型
+        FileName                            = "mod_tas_freeswitch.so"                   对应的模块文件
+        SpanRange                           = "0:0-31"                                  中继范围
+                                            #格式"$NodeID:$BeginSpan-$EndSpan"，含$EndSpan，多个节点用分号分隔
+    ><NodeCfg                                                                           
+        ><Node                                                                          
+            ID                              = "0"                                       Node的ID
+            SWID                            = "MBJ12051600615"                          Node的SWID
+            ><ESL                                                                       
+                ><Connect                   #参考：conf/autoload_configs/event_socket.conf.xml
+                    IP                      = "127.0.0.1"                               ESL地址
+                    Port                    = "8021"                                    ESL端口
+                    User                    = ""                                        ESL用户
+                    PassWord                = "ClueCon"                                 ESL密码
+                    TimeOut                 = "5000"                                    ESL超时
+                ><LogEslEvent                                                           
+                    Flag                    = "Enable"                                  LogEslEvent启用或禁用
+                    Path                    = ""                                        LogEslEvent路径
+                    Prefix                  = "esl_event"                               LogEslEvent前缀?
+                    Type                    = "plain"                                   LogEslEvent类型
+                    Cache                   = "yes"                                     LogEslEvent是否缓存
+                    BackupCount             = "20"                                      LogEslEvent备份计数?
+                    ><Ignore                #Log忽略的EslEvent:
+                        EslEvent            = "ESL_EVENT_BACKGROUND_JOB"                EslEvent后台任务
+                        ><condition                                                     
+                            field           = "Job-Command"                             
+                            expression      = "list_users"                              
+                    ><Ignore                                                            
+                        EslEvent            = "ESL_EVENT_BACKGROUND_JOB"                EslEvent后台任务
+                        ><condition                                                     
+                            field           = "Job-Command"                             
+                            expression      = "show"                                    
+                ><IgnoreDtmf                #系统忽略的dtmf码: 降低模拟线躁音引起的识别错误率
+                    ><Dtmf                                                              
+                        Value               = "A"                                       
+                ><PRD                                                                   
+                    Sound                   = "/home/freeswitch/sounds"                 系统声音存放目录
+                    Record                  = "/home/freeswitch/sounds"                 录音存放目录
+                    User                    = "freeswitch"                              拥有Record目录的读写权限的linux系统用户
+                                                                                        
+    ><Log                                   #TAS服务日志
+        Style                               = "FILE"                                    TAS服务日志输出方式配置
+        Level                               = "DEBUG"                                   TAS服务日志输出的日志级别
+        Cache                               = "yes"                                     TAS服务日志TAS服务日志是否启用缓存
+        BackupCount                         = "100"                                     TAS服务日志备份计数
+                                                                                        
+    ><SIPGW                                 #SIP网关配置
+            BeginSpan                       = "12" 
+            EndSpan                         = "27"
+        ><SIPOutbound                       #SIP呼出网关 (呼到freeswitch分机)
+            NodeID                          = "0"                                       呼出所在的交换机结点号
+            Type                            = "Peer"                                    呼出外线(Sip trunk)类型
+            BeginSpan                       = "12"                                      呼出前中继号 [----
+            EndSpan                         = "19"                                      呼出后中继号 ----]
+            IP                              = "192.168.2.240"                           呼出被叫号码的IP地址
+            Port                            = "5060"                                    呼出被叫号码的IP端口
+            UserName                        = ""                                        呼出认证账号
+            PassWord                        = ""                                        呼出账号密码
+            VoiceCodes                      = "G711_ALAW,G711_ULAW,G729"                呼出编码类型
+            Flag                            = "Enable"                                  呼出启用或禁用
+            originate                       = "{origination_uuid=XXX} &amp;park()"      
+        ><SIPOutbound                       #SIP呼出网关 (呼到205freeswitch - 转外线)
+            NodeID                          = "0"                                       呼出所在的交换机结点号
+            Type                            = "Peer"                                    呼出外线(Sip trunk)类型
+            BeginSpan                       = "20"                                      呼出前中继号 [----
+            EndSpan                         = "27"                                      呼出后中继号 ----]
+            IP                              = "192.168.1.205"                           呼出被叫号码的IP地址
+            Port                            = "6080"                                    呼出被叫号码的IP端口
+            UserName                        = ""                                        呼出认证账号
+            PassWord                        = ""                                        呼出账号密码
+            VoiceCodes                      = "G711_ALAW,G711_ULAW"                     呼出编码类型
+            Flag                            = "Enable"                                  呼出启用或禁用
+            originate                       = "{origination_uuid=XXX} YYY &amp;park()"  
+        ><SIPInBound                        #SIP呼入网关
+            BeginSpan                       = "12"                                      呼入前中继号 [----
+            EndSpan                         = "27"                                      呼入后中继号 ----]
+            Caller                          = "."                                       呼入主叫(禁止空主叫)
+            Callee                          = "."                                       呼入被叫(禁止空被叫)
+            FromAddr                        = "0.0.0.0"                                 呼入主叫IP地址
+            Mask                            = "0.0.0.0"                                 呼入主叫地址掩码
+            Port                            = "65535"                                   呼入地址端口
+            Alias                           = ""                                        呼入别称?
+            VoiceCodes                      = "G729..."                                 呼入编码类型
+            Flag                            = "Enable"                                  呼入启用或禁用
+    ><Fax                                   #传真
+            FilePath                        = "/home/focustar/icip6/fax"                传真文件路径
+            Mode                            = "T38"                                     传真模式
+            Identifier                      = "FAX:020-38258421"                        传真标识(发送者号码)
+            PageHeaderInfo                  = "www.focustar.net TEL:020-38258421"       传真页码头携带信息
+    ><VoiceList>                                                                        
+        ><VoiceFile                         #平台语音文件配置：
+            ID                              = "0"                                       本地文件的ID号
+            Description                     = "数字0"                                   本地文件内容的描述
+            FileName                        = "number/Voc_Number0.wav"                  本地文件的路径
